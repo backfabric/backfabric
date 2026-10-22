@@ -9,6 +9,23 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
     in
     {
+      packages = forAllSystems (pkgs: {
+        default = pkgs.rustPlatform.buildRustPackage {
+          pname = "backfabric";
+          version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).workspace.package.version;
+          src = pkgs.lib.cleanSource ./.;
+          cargoLock.lockFile = ./Cargo.lock;
+          cargoBuildFlags = [ "-p" "backfabric" ];
+          cargoTestFlags = [ "-p" "backfabric" ];
+          meta = {
+            description = "The fabric behind the interface: a network of agents";
+            homepage = "https://github.com/backfabric/backfabric";
+            license = with pkgs.lib.licenses; [ mit asl20 ];
+            mainProgram = "backfabric";
+          };
+        };
+      });
+
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = with pkgs; [ cargo rustc rustfmt clippy rust-analyzer ];
