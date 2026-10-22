@@ -54,10 +54,11 @@ backfabric send --to <ticket> --task <task id> Ada
 `?` leaves the task waiting for input; the next message in that task completes
 it. Each caller sees and continues only its own tasks.
 
-A2A travels as HTTP/1.1 over iroh bidirectional streams on ALPN
-`backfabric/a2a/0`. Nodes are reached through a relay and publish nothing: no
-pkarr or DNS discovery and no address lookup, so agents learn about each other
-only from tickets.
+A2A uses its gRPC binding over an iroh bidirectional stream on ALPN
+`backfabric/a2a-grpc/0`. The agent card names the agent
+`iroh://<endpoint id>` and is served through GetExtendedAgentCard. Nodes are
+reached through a relay and publish nothing: no pkarr or DNS discovery and no
+address lookup, so agents learn about each other only from tickets.
 
 ## License
 
