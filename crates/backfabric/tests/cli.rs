@@ -92,6 +92,15 @@ fn id_prints_the_public_key_of_the_node_key() {
 }
 
 #[test]
+fn id_accepts_uppercase_hex_as_the_same_key() {
+    let lower = id(&"ab".repeat(32), None);
+    let upper = id(&"AB".repeat(32), None);
+
+    assert!(upper.status.success(), "{}", stderr(&upper));
+    assert_eq!(upper.stdout, lower.stdout);
+}
+
+#[test]
 fn id_prints_a_ticket_with_the_relay_and_no_ip_addresses() {
     let key = "22".repeat(32);
     let expected: SecretKey = key.parse().unwrap();
