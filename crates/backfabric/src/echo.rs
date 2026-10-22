@@ -5,19 +5,18 @@
 
 use a2a::{
     A2AError, AgentCapabilities, AgentCard, AgentInterface, AgentSkill, Message, Part, Role,
-    StreamResponse, TRANSPORT_PROTOCOL_JSONRPC, TaskState, TaskStatus, TaskStatusUpdateEvent,
+    StreamResponse, TRANSPORT_PROTOCOL_GRPC, TaskState, TaskStatus, TaskStatusUpdateEvent,
 };
 use a2a_server::{AgentExecutor, ExecutorContext};
 use futures::stream::{self, BoxStream, StreamExt};
+use iroh::EndpointId;
+
+use crate::a2a_url;
 
 type Events = BoxStream<'static, Result<StreamResponse, A2AError>>;
 
-/// Base URL of the agent. The host is a placeholder: requests travel over an
-/// iroh connection that is already bound to the agent's endpoint id.
-pub const AGENT_URL: &str = "http://backfabric/";
-
-/// The agent card of the echo agent.
-pub fn card() -> AgentCard {
+/// The agent card of the echo agent running on the node `node`.
+pub fn card(node: EndpointId) -> AgentCard {
     let text = vec!["text/plain".to_string()];
     AgentCard {
         name: "echo".into(),
@@ -25,8 +24,13 @@ pub fn card() -> AgentCard {
             "Replies with the text it receives; text starting with `?` asks for an answer first."
                 .into(),
         version: env!("CARGO_PKG_VERSION").into(),
-        supported_interfaces: vec![AgentInterface::new(AGENT_URL, TRANSPORT_PROTOCOL_JSONRPC)],
-        capabilities: AgentCapabilities::default(),
+        supported_interfaces: vec![AgentInterface::new(a2a_url(node), TRANSPORT_PROTOCOL_GRPC)],
+        capabilities: AgentCapabilities {
+            // gRPC has no plain GetAgentCard; callers are authenticated by key,
+            // so the card is served as the extended card.
+            extended_agent_card: Some(true),
+            ..AgentCapabilities::default()
+        },
         default_input_modes: text.clone(),
         default_output_modes: text,
         skills: vec![AgentSkill {

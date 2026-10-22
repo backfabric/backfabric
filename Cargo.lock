@@ -26,6 +26,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "a2a-grpc"
+version = "0.3.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2f78ad52aace2a79d8b65f6550268719ff00b91decb0eea1172846a921311e5"
+dependencies = [
+ "a2a-client-lf",
+ "a2a-lf",
+ "a2a-pb",
+ "a2a-server-lf",
+ "async-trait",
+ "futures",
+ "http",
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-types",
+ "tracing",
+]
+
+[[package]]
 name = "a2a-lf"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -570,23 +591,23 @@ name = "backfabric"
 version = "0.1.0"
 dependencies = [
  "a2a-client-lf",
+ "a2a-grpc",
  "a2a-lf",
+ "a2a-pb",
  "a2a-server-lf",
  "anyhow",
- "axum",
  "clap",
  "futures",
- "hyper",
  "hyper-util",
  "iroh",
  "iroh-tickets",
- "reqwest",
  "secretspec",
  "serde",
  "tempfile",
  "tokio",
- "tokio-util",
  "toml",
+ "tonic",
+ "tower",
 ]
 
 [[package]]
@@ -6079,6 +6100,17 @@ dependencies = [
  "syn 2.0.119",
  "tempfile",
  "tonic-build",
+]
+
+[[package]]
+name = "tonic-types"
+version = "0.14.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73ab1b02061f83d519bba3caa167f88f261ef05720ab8ebc954ade70de3348e8"
+dependencies = [
+ "prost",
+ "prost-types",
+ "tonic",
 ]
 
 [[package]]

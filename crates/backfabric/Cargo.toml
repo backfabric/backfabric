@@ -12,20 +12,22 @@ workspace = true
 
 [dependencies]
 a2a-client-lf = { version = "0.2.9", default-features = false }
+a2a-grpc = { version = "0.3.11", default-features = false }
 a2a-lf = "0.4.2"
+a2a-pb = "0.3.2"
 a2a-server-lf = "0.5.3"
 anyhow = "1.0.104"
-axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio"] }
 clap = { version = "4.6.7", features = ["derive"] }
 futures = "0.3.34"
-hyper = { version = "1", features = ["http1", "server"] }
-hyper-util = { version = "0.1.21", features = ["tokio", "service"] }
+hyper-util = { version = "0.1.21", default-features = false, features = ["tokio"] }
 iroh = "1.4"
 iroh-tickets = "1"
-reqwest = { version = "0.13.5", default-features = false }
 secretspec = { version = "0.21.1", default-features = false, features = ["keyring"] }
 serde = { version = "1.0.229", features = ["derive"] }
-tempfile = "3.27.0"
-tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "io-util", "sync", "signal"] }
-tokio-util = { version = "0.7.20", features = ["rt"] }
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "io-util", "signal"] }
 toml = "1.1.8"
+tonic = { version = "0.14", default-features = false, features = ["server", "channel"] }
+tower = { version = "0.5", default-features = false, features = ["util"] }
+
+[dev-dependencies]
+tempfile = "3.27.0"

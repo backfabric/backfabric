@@ -67,6 +67,22 @@ async fn echoes_text_and_completes() {
 }
 
 #[tokio::test]
+async fn card_names_the_agent_by_its_iroh_endpoint() {
+    let node = server().await;
+    let client = caller(&node).await;
+
+    let interfaces = &client.card().supported_interfaces;
+
+    assert_eq!(interfaces.len(), 1);
+    assert_eq!(interfaces[0].url, format!("iroh://{}", node.id()));
+    assert_eq!(interfaces[0].protocol_binding, "GRPC");
+    assert_eq!(interfaces[0].protocol_version, "1.0");
+
+    client.close().await;
+    node.shutdown().await.unwrap();
+}
+
+#[tokio::test]
 async fn question_waits_for_input_then_completes_with_answer() {
     let node = server().await;
     let client = caller(&node).await;

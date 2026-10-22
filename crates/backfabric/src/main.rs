@@ -64,8 +64,8 @@ async fn main() -> Result<()> {
         }
         Command::Serve { config } => {
             let config = Config::load(&config)?;
-            let key = load_node_key()?;
-            let node = Node::spawn(key, config.bind_addr(), config.relay_mode()).await?;
+            let node_key = load_node_key()?;
+            let node = Node::spawn(node_key, config.bind_addr(), config.relay_mode()).await?;
             println!("endpoint id: {}", node.id());
             println!("listening on: {}", node.addr());
             println!("agent access: {}", config.agent.access);
