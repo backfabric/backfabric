@@ -1,31 +1,25 @@
 //! Two nodes in one process on loopback: a server node with the echo agent
-//! and callers with their own keys.
+//! and callers with their own keys. No relay is reachable offline, so the
+//! tickets carry the server's loopback address instead.
 
 use a2a::{GetTaskRequest, ListTasksRequest, Task, TaskState};
 use backfabric::{
     client::{Client, reply},
-    config::Config,
     node::Node,
 };
-use iroh::SecretKey;
+use iroh::{EndpointAddr, SecretKey, endpoint::RelayMode};
+use iroh_tickets::endpoint::EndpointTicket;
 
 async fn server() -> Node {
-    let config = Config::parse(
-        r#"
-        [node]
-        address = "127.0.0.1"
-        port = 0
-
-        [agent]
-        access = "public"
-        "#,
-    )
-    .unwrap();
-    Node::spawn(SecretKey::generate(), &config).await.unwrap()
+    let bind = "127.0.0.1:0".parse().unwrap();
+    Node::spawn(SecretKey::generate(), bind, RelayMode::Disabled)
+        .await
+        .unwrap()
 }
 
 async fn caller(node: &Node) -> Client {
-    Client::connect(SecretKey::generate(), node.id(), node.addr())
+    let ticket = EndpointTicket::new(EndpointAddr::new(node.id()).with_ip_addr(node.addr()));
+    Client::connect(SecretKey::generate(), &ticket)
         .await
         .unwrap()
 }

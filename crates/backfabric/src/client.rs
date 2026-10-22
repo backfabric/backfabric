@@ -1,6 +1,6 @@
 //! An A2A client that reaches agents over iroh with the caller's node key.
 
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
 use a2a::{Message, Part, Role, SendMessageRequest, SendMessageResponse, Task};
 use a2a_client::{
@@ -8,7 +8,8 @@ use a2a_client::{
     jsonrpc::JsonRpcTransportFactory,
 };
 use anyhow::{Context, Result, bail};
-use iroh::{Endpoint, EndpointAddr, EndpointId, SecretKey, endpoint::Connection};
+use iroh::{Endpoint, SecretKey, endpoint::Connection, endpoint::RelayMode};
+use iroh_tickets::endpoint::EndpointTicket;
 use tempfile::TempDir;
 use tokio::net::UnixListener;
 use tokio_util::task::AbortOnDropHandle;
@@ -24,14 +25,22 @@ pub struct Client {
 }
 
 impl Client {
-    /// Connects with `key` to the agent at endpoint `to`, reachable at `addr`,
-    /// and fetches its agent card.
-    pub async fn connect(key: SecretKey, to: EndpointId, addr: SocketAddr) -> Result<Self> {
-        let endpoint = endpoint_builder(key).bind().await?;
+    /// Connects with `key` to the agent addressed by `ticket` and fetches its
+    /// agent card. The only relay used is the one in the ticket.
+    pub async fn connect(key: SecretKey, ticket: &EndpointTicket) -> Result<Self> {
+        let to = ticket.endpoint_addr().clone();
+        let relays: Vec<_> = to.relay_urls().cloned().collect();
+        let relay = if relays.is_empty() {
+            RelayMode::Disabled
+        } else {
+            RelayMode::custom(relays)
+        };
+        let endpoint = endpoint_builder(key, relay).bind().await?;
+        let id = to.id;
         let conn = endpoint
-            .connect(EndpointAddr::new(to).with_ip_addr(addr), A2A_ALPN)
+            .connect(to, A2A_ALPN)
             .await
-            .with_context(|| format!("cannot connect to {to} at {addr}"))?;
+            .with_context(|| format!("cannot connect to {id}"))?;
 
         // reqwest cannot dial an iroh stream (its connection type is sealed), so
         // a private Unix socket bridges each HTTP connection to a new stream.

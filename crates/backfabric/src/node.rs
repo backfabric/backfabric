@@ -13,23 +13,30 @@ use a2a_server::{
 use anyhow::{Context, Result};
 use hyper_util::{rt::TokioIo, service::TowerToHyperService};
 use iroh::{
-    Endpoint, EndpointId, SecretKey,
-    endpoint::{Builder, Connection, PortmapperConfig, presets},
+    Endpoint, EndpointAddr, EndpointId, RelayUrl, SecretKey,
+    endpoint::{Builder, Connection, PortmapperConfig, RelayMode, presets},
     protocol::{AcceptError, ProtocolHandler, Router},
 };
+use iroh_tickets::endpoint::EndpointTicket;
 
 use crate::{
     A2A_ALPN,
-    config::Config,
     echo::{self, Echo},
 };
 
-/// An endpoint builder that never touches the internet: no relays, no
-/// address lookup, no port mapping. Peers are dialled by direct address.
-pub(crate) fn endpoint_builder(key: SecretKey) -> Builder {
+/// An endpoint builder that publishes nothing: no address lookup, no pkarr or
+/// DNS discovery, no port mapping. Peers are reached through `relay` or by
+/// direct address.
+pub(crate) fn endpoint_builder(key: SecretKey, relay: RelayMode) -> Builder {
     Endpoint::builder(presets::Minimal)
         .secret_key(key)
+        .relay_mode(relay)
         .portmapper_config(PortmapperConfig::Disabled)
+}
+
+/// The address of an agent: its endpoint id and its relay, no IP addresses.
+pub fn relay_ticket(id: EndpointId, relay: RelayUrl) -> EndpointTicket {
+    EndpointTicket::new(EndpointAddr::new(id).with_relay_url(relay))
 }
 
 /// A running node.
@@ -38,15 +45,15 @@ pub struct Node {
 }
 
 impl Node {
-    /// Binds the endpoint with `key` at the configured address and starts
+    /// Binds the endpoint with `key` at `bind`, using `relay`, and starts
     /// serving the agent.
-    pub async fn spawn(key: SecretKey, config: &Config) -> Result<Self> {
-        let endpoint = endpoint_builder(key)
+    pub async fn spawn(key: SecretKey, bind: SocketAddr, relay: RelayMode) -> Result<Self> {
+        let endpoint = endpoint_builder(key, relay)
             .clear_ip_transports()
-            .bind_addr(config.bind_addr())?
+            .bind_addr(bind)?
             .bind()
             .await
-            .with_context(|| format!("cannot bind {}", config.bind_addr()))?;
+            .with_context(|| format!("cannot bind {bind}"))?;
         let router = Router::builder(endpoint)
             .accept(A2A_ALPN, A2a::default())
             .spawn();
@@ -56,6 +63,20 @@ impl Node {
     /// The endpoint id, which is also the node's public key.
     pub fn id(&self) -> EndpointId {
         self.router.endpoint().id()
+    }
+
+    /// Waits until the node is connected to its home relay and returns its
+    /// ticket.
+    pub async fn ticket(&self) -> Result<EndpointTicket> {
+        let endpoint = self.router.endpoint();
+        endpoint.online().await;
+        let relay = endpoint
+            .addr()
+            .relay_urls()
+            .next()
+            .cloned()
+            .context("the node has no home relay")?;
+        Ok(relay_ticket(self.id(), relay))
     }
 
     /// The address the endpoint is bound to.

@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use iroh::{RelayUrl, endpoint::RelayMode};
 use serde::Deserialize;
 
 /// The whole configuration of a node.
@@ -31,6 +32,9 @@ pub struct NodeConfig {
 pub struct AgentConfig {
     /// Who may call the agent. Mandatory: access is never implied.
     pub access: Access,
+    /// The relay through which the agent is reached. When absent, iroh's
+    /// default n0 relays are used.
+    pub relay: Option<RelayUrl>,
 }
 
 /// Access mode of an agent.
@@ -65,5 +69,13 @@ impl Config {
     /// The socket address the node binds to.
     pub fn bind_addr(&self) -> SocketAddr {
         SocketAddr::new(self.node.address, self.node.port)
+    }
+
+    /// The relays the node uses: the configured one, or iroh's defaults.
+    pub fn relay_mode(&self) -> RelayMode {
+        match &self.agent.relay {
+            Some(url) => RelayMode::custom([url.clone()]),
+            None => RelayMode::Default,
+        }
     }
 }
