@@ -25,23 +25,29 @@ Serve the echo agent with a config file:
 
 ```toml
 [node]
-address = "127.0.0.1"
+address = "0.0.0.0"
 port = 7400
 
 [agent]
 access = "public"   # mandatory; "public" is the only mode for now
+# relay = "https://relay.example.org"   # optional; iroh's n0 relays otherwise
 ```
 
 ```sh
 backfabric serve --config node.toml
 ```
 
+Once the node reaches its home relay, `serve` prints the agent's ticket: an
+iroh endpoint ticket with the endpoint id and the relay URL, and no IP
+addresses. With a relay in the config, `backfabric id --config node.toml`
+prints the same ticket without starting the node.
+
 From another node, with its own key:
 
 ```sh
-backfabric send --to <endpoint id> --addr 127.0.0.1:7400 hello
-backfabric send --to <endpoint id> --addr 127.0.0.1:7400 '?What is your name'
-backfabric send --to <endpoint id> --addr 127.0.0.1:7400 --task <task id> Ada
+backfabric send --to <ticket> hello
+backfabric send --to <ticket> '?What is your name'
+backfabric send --to <ticket> --task <task id> Ada
 ```
 
 `send` prints the reply, the task state and the task id. Text starting with
@@ -49,8 +55,9 @@ backfabric send --to <endpoint id> --addr 127.0.0.1:7400 --task <task id> Ada
 it. Each caller sees and continues only its own tasks.
 
 A2A travels as HTTP/1.1 over iroh bidirectional streams on ALPN
-`backfabric/a2a/0`. Nodes use no relays and no discovery: peers are dialled by
-endpoint id and direct address.
+`backfabric/a2a/0`. Nodes are reached through a relay and publish nothing: no
+pkarr or DNS discovery and no address lookup, so agents learn about each other
+only from tickets.
 
 ## License
 
