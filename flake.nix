@@ -17,6 +17,9 @@
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [ "-p" "backfabric" ];
           cargoTestFlags = [ "-p" "backfabric" ];
+          # a2a-pb compiles protobuf at build time; use nixpkgs' protoc, not the vendored binary.
+          nativeBuildInputs = [ pkgs.protobuf ];
+          env.PROTOC = "${pkgs.protobuf}/bin/protoc";
           meta = {
             description = "The fabric behind the interface: a network of agents";
             homepage = "https://github.com/backfabric/backfabric";
@@ -28,8 +31,9 @@
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          packages = with pkgs; [ cargo rustc rustfmt clippy rust-analyzer ];
+          packages = with pkgs; [ cargo rustc rustfmt clippy rust-analyzer protobuf ];
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+          PROTOC = "${pkgs.protobuf}/bin/protoc";
         };
       });
     };
