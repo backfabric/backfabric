@@ -5,7 +5,7 @@ The fabric behind the interface: a network of agents.
 An agent is a key, a definition and its own state. Agents share nothing and
 talk only through messages. Where an agent runs is not part of its logic.
 
-Status: early development. Stage 1 runs an echo agent over A2A on iroh.
+Status: early development. A node runs an echo agent over A2A on iroh.
 
 ## Usage
 
@@ -55,10 +55,16 @@ backfabric send --to <ticket> --task <task id> Ada
 it. Each caller sees and continues only its own tasks.
 
 A2A uses its gRPC binding over an iroh bidirectional stream on ALPN
-`backfabric/a2a-grpc/0`. The agent card names the agent
-`iroh://<endpoint id>` and is served through GetExtendedAgentCard. Nodes are
-reached through a relay and publish nothing: no pkarr or DNS discovery and no
-address lookup, so agents learn about each other only from tickets.
+`backfabric/a2a-grpc/0`. The agent card lists one interface,
+`iroh://<endpoint id>` with the GRPC binding, and is served through
+GetExtendedAgentCard. Nodes are reached through a relay and publish nothing:
+no pkarr or DNS discovery and no address lookup, so agents learn about each
+other only from tickets.
+
+A public agent keeps its memory bounded: the tasks of at most 10,000 callers
+are kept (least recently seen dropped first), each caller may create at most
+100 tasks, at most 1,024 connections are served at once, and each request has
+a 30-second time limit.
 
 ## License
 
