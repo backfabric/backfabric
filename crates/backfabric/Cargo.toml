@@ -1,0 +1,30 @@
+[package]
+name = "backfabric"
+description = "The fabric behind the interface: a network of agents"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+a2a-client-lf = { version = "0.2.9", default-features = false }
+a2a-lf = "0.4.2"
+a2a-server-lf = "0.5.3"
+anyhow = "1.0.104"
+axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio"] }
+clap = { version = "4.6.7", features = ["derive"] }
+futures = "0.3.34"
+hyper = { version = "1", features = ["http1", "server"] }
+hyper-util = { version = "0.1.21", features = ["tokio", "service"] }
+iroh = "1.4"
+reqwest = { version = "0.13.5", default-features = false }
+secretspec = { version = "0.21.1", default-features = false, features = ["keyring"] }
+serde = { version = "1.0.229", features = ["derive"] }
+tempfile = "3.27.0"
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "io-util", "sync", "signal"] }
+tokio-util = { version = "0.7.20", features = ["rt"] }
+toml = "1.1.8"
